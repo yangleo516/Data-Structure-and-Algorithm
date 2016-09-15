@@ -1,0 +1,109 @@
+import java.util.ArrayList;
+import java.util.Arrays;
+public class ClosestPairDC {
+	
+    public final static double INF = java.lang.Double.POSITIVE_INFINITY;
+    public static XYPoint result1,result2;  //Declare public variables to return the pair
+    public static double baseDist = INF;    //Declare public variable to get base case results
+    public static double minDist = INF;     //To get the minimum distance.
+    
+    //Return the closest pair and the minimum distance
+	public static void findClosestPair(XYPoint pointsByX[], XYPoint pointsByY[],
+							boolean print)
+	{
+		double distance;
+		distance = findClosestPairHelper(pointsByX,pointsByY);
+		if(print)
+ 		System.out.println("DC    "+ result1 + " " + result2 + " " + distance);
+ 	}
+	
+    //Declare "findClosestPairHelper" to help do 'Divide-and-Conquer'.
+    public static double findClosestPairHelper(XYPoint pointsByX[],XYPoint pointsByY[])
+    {
+    	int nPoints = pointsByX.length;                         //Numbers of points
+    	int mid;
+    	double lrDist,distL,distR;
+        
+    	//base cases as the following: n==1 and n==2
+    	if(nPoints == 1){
+    		baseDist = INF;
+    	}
+    	else
+    		if(nPoints == 2){
+    			baseDist = pointsByX[0].dist(pointsByX[1]);     //Compute base-case distance.
+    			if (baseDist < minDist){
+    				minDist = baseDist;
+    				result1 = pointsByX[0];                     //Get base-case points
+    				result2 = pointsByX[1];
+    				}
+    			}
+    	
+    	 //Divide-and-Conquer algorithm.                                        
+    		else{
+    			mid = (int)(Math.ceil(nPoints / 2.0)-1);        
+    			
+    			//Divide into two subproblems
+    			//Copy pointsByX[0..mid] into new array XL in x order.
+    			//Copy pointsByX[mid+1..nPoints-1] into XR in x order.
+    			//XL,YL have same points
+    			//XR,YR have same points
+    			XYPoint XL [] = Arrays.copyOfRange(pointsByX, 0, mid);
+    			XYPoint XR [] = Arrays.copyOfRange(pointsByX, mid, nPoints);
+
+	            
+    			XYPoint YL [] = new XYPoint[mid];
+	            XYPoint YR [] =	new XYPoint[nPoints-mid];
+	            //After doing the following, XL and YL have same points but in different order
+	            int x = 0;
+	            int y = 0;
+	            for(int i=0;i<nPoints;i++){
+	            	if(pointsByY[i].isLeftOf(pointsByX[mid])){
+	            		YL[x] = pointsByY[i];
+	            		x++;
+	            	}
+	            	else{
+	            		YR[y] = pointsByY[i];
+	            		y++;
+	            	}	            		
+	            }
+	            
+	            //Conquer
+	            //Do recursion parts.
+	            distL = findClosestPairHelper(XL,YL);
+	            distR = findClosestPairHelper(XR,YR);
+	            
+	            //Compare distL and distR
+	            //Assign the smaller to lrDist
+	            lrDist = Math.min(distL, distR);                 
+	            
+	            minDist = lrDist;
+	            
+	            XYPoint midPoint = pointsByX[mid];
+	           	
+	            //Combine
+	            //Create a new array yStrip, in increasing y order
+	            //All points p in yStrip s.t.|p.x-midPoint.x|<lrDist
+	            ArrayList<XYPoint> yStrip = new ArrayList<XYPoint>();
+	        	for(int i=0;i < nPoints;i++){
+	        		if(Math.abs(pointsByY[i].x-midPoint.x) < lrDist){
+	        			yStrip.add(pointsByY[i]);
+	        		}
+	        	}
+	        	
+	        	//Compute distance of pairs within lrDist * 2lrDist area
+	        	//Record pair of which distance < minDist
+	        	double d = INF;
+	        	for(int j=0;j<=yStrip.size()-2;j++)
+	        		for(int k=j+1;k<=yStrip.size()-1;k++)
+	        			if(yStrip.get(k).y-yStrip.get(j).y <= lrDist){
+	        			d = yStrip.get(j).dist(yStrip.get(k));
+	        			if(d < minDist){
+	        			minDist = d;
+	        			result1 = yStrip.get(k);
+	        			result2 = yStrip.get(j);	        			
+	        			}	        			
+	        		}	        	
+    		}
+    		return minDist;
+    }
+}

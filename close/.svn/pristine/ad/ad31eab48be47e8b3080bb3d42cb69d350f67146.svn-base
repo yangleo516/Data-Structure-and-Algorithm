@@ -1,0 +1,88 @@
+import java.util.ArrayList;
+import java.util.Arrays;
+public class ClosestPairDC {
+	
+    public final static double INF = java.lang.Double.POSITIVE_INFINITY;
+    public static XYPoint result1,result2;
+    public static double baseDist = INF;
+    public static double minDist = INF;
+    
+	public static void findClosestPair(XYPoint pointsByX[], XYPoint pointsByY[],
+							boolean print)
+	{
+		double distance;
+		distance = findClosestPairHelper(pointsByX,pointsByY);
+ 		System.out.println("DC    "+ result1 + " " + result2 + " " + distance);
+ 	}
+  
+    public static double findClosestPairHelper(XYPoint pointsByX[],XYPoint pointsByY[])
+    {
+    	int nPoints = pointsByX.length;
+    	int mid;
+    	double lrDist,distL,distR;
+
+    	if(nPoints == 1){
+    		baseDist = INF;
+    	}
+    	else
+    		if(nPoints == 2){
+    			baseDist = pointsByX[0].dist(pointsByX[1]);
+    			if (baseDist < minDist){
+    				minDist = baseDist;
+    				result1 = pointsByX[0];
+    				result2 = pointsByX[1];
+    				}
+    			}
+    	                                            
+    		else{
+    			mid = (int)(Math.ceil(nPoints / 2.0)-1);
+    			
+    			XYPoint XL [] = Arrays.copyOfRange(pointsByX, 0, mid);
+    			XYPoint XR [] = Arrays.copyOfRange(pointsByX, mid, nPoints);
+	            XYPoint YL [] = Arrays.copyOfRange(pointsByX, 0, mid);
+	            XYPoint YR [] = Arrays.copyOfRange(pointsByX, mid, nPoints);
+	            
+	            int x = 0;
+	            int y = 0;
+	            for(int i=0;i<nPoints;i++){
+	            	if(pointsByY[i].isLeftOf(pointsByX[mid])){
+	            		YL[x] = pointsByY[i];
+	            		x++;
+	            	}
+	            	else{
+	            		YR[y] = pointsByY[i];
+	            		y++;
+	            	}	            		
+	            }
+	    
+	            distL = findClosestPairHelper(XL,YL);
+	            distR = findClosestPairHelper(XR,YR);
+	            
+	            lrDist = Math.min(distL, distR); 
+	            
+	            minDist = lrDist;
+	            
+	            XYPoint midPoint = pointsByX[mid];
+	           		            
+	            ArrayList<XYPoint> yStrip = new ArrayList<XYPoint>();
+	        	for(int i=0;i < nPoints;i++){
+	        		if(Math.abs(pointsByY[i].x-midPoint.x) < lrDist){
+	        			yStrip.add(pointsByY[i]);
+	        		}
+	        	}
+	        	
+	        	double d = INF;
+	        	for(int j=0;j<=yStrip.size()-2;j++)
+	        		for(int k=j+1;k<=yStrip.size()-1;k++)
+	        			if(yStrip.get(k).y-yStrip.get(j).y <= lrDist){
+	        			d = yStrip.get(j).dist(yStrip.get(k));
+	        			if(d < minDist){
+	        			minDist = d;
+	        			result1 = yStrip.get(j);
+	        			result2 = yStrip.get(k);	        			
+	        			}	        			
+	        		}	        	
+    		}
+    		return minDist;
+    }
+}
