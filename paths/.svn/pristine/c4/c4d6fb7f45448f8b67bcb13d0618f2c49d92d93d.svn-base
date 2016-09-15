@@ -1,0 +1,122 @@
+import java.util.ArrayList;
+
+//import ShortestPaths.Element;
+
+//
+// SHORTESTPATHS.JAVA
+// Compute shortest paths in a graph.
+//
+// Your constructor should compute the actual shortest paths and
+// maintain all the information needed to reconstruct them.  The
+// returnPath() function should use this information to return the
+// appropriate path of edge ID's from the start to the given end.
+//
+// Note that the start and end ID's should be mapped to vertices using
+// the graph's get() function.
+//
+// You can ignore the input and startTime arguments to the constructor
+// unless you are doing the extra credit.
+//
+class ShortestPaths {
+    
+	int maxDist = Integer.MAX_VALUE;			// Set a maximum distance value
+	
+	//
+	//	The following is to create a new data structure Element,
+	//	each Element objects are stored in priority queue for insert, extract,
+	//	decreaseKey implementations. These elements are also stored in an ArrayList
+	// 	named store, for query.
+	//
+	class Element {
+		int dist;
+		int edgeId;
+		Vertex vertex;
+		Handle handle = new Handle();
+		Element parent;
+		
+		public Element(Vertex v) {
+			this.vertex = v;
+			this.dist = maxDist;
+			this.parent = null;
+		}
+	}
+	
+	PriorityQueue<Element> PQ = new PriorityQueue<Element>();
+	ArrayList<Element> store = new ArrayList<Element>();
+    //
+    // constructor
+    //
+    public ShortestPaths(Multigraph G, int startId, Input input, int startTime) 
+    {
+    	Initialize(PQ,G,startId);					// Initialize
+    	//
+    	// The following is the core for implementing Dijkstra Algorithm
+    	while(!PQ.isEmpty()) {
+    		Element u = PQ.extractMin();
+    		if(u.dist != maxDist) {
+    			Vertex.EdgeIterator edges = u.vertex.adj();
+    			while(edges.hasNext()) {						// If iterator has something,
+    				Edge edge = edges.next();					// get an element from iterator
+    				Element v = store.get(edge.to().id());
+    				if(PQ.decreaseKey(v.handle, u.dist+edge.weight())) {	// update keys for every
+    																		// vertices
+    					v.dist = u.dist + edge.weight();
+    					v.edgeId = edge.id();
+    					v.parent = u;
+    				}
+    			}
+    		}
+    	}
+    }
+    
+    /**
+     * Initialize every non-start elements with distance infinity.
+     * Then, store every elements into the ArrayList store.
+     * @param pq		priority queue
+     * @param G			the graph
+     * @param startId	identification of the start element.
+     */
+    public void Initialize(PriorityQueue<Element> pq, Multigraph G, int startId) {
+    	for(int i=0;i<G.nVertices();i++) {
+    		store.add(new Element(null));
+    	}
+    	for(int i=0;i<G.nVertices();i++) {
+    		Vertex u = G.get(i);
+    		Element ele = new Element(u);
+    		int id = G.get(i).id();
+    		if(id == startId) {
+    			ele.dist = 0;							// Initialize start node with distance 0
+    			ele.handle = pq.insert(0, ele);			// insert the start node into the heap
+    			store.set(id, ele);						// Store it in ArrayList
+    		}
+    		else {
+    			ele.handle = pq.insert(maxDist, ele);	// Insert every non-started nodes into the heap
+        		store.set(id, ele);	
+    		}
+    	} 	
+    }
+    //
+    // returnPath()
+    // Return an array containing a list of edge ID's forming
+    // a shortest path from the start vertex to the specified
+    // end vertex.
+    //
+    public int [] returnPath(int endId) 
+    { 
+	// your code here
+    	int k = 0;							// Count # of vertices for a path.
+    	ArrayList<Integer> id = new ArrayList<Integer>();
+    	Element end = store.get(endId);
+    	while(end.parent != null) {			// Find shortes-path tree, recored ids for each edge.
+    		id.add(end.edgeId);
+    		end = end.parent;
+    		k++;
+    	}
+//    	int size = id.size();
+    	int[] path = new int[k];
+    	for(int i=k; i>0; i--) {
+    		path[i-1] = id.get(k-i);	// record edges for the shortest path from the start node.
+    	}
+    	return path;
+    }
+}

@@ -1,0 +1,217 @@
+import java.util.ArrayList;
+
+//
+// PRIORITYQUEUE.JAVA
+// A priority queue class supporting sundry operations needed for
+// Dijkstra's algorithm.
+//
+
+class PriorityQueue<T> {
+    public ArrayList<Node<T>> heap;
+    // constructor
+    //
+    public PriorityQueue()
+    {
+    	heap = new ArrayList<Node<T>>();
+    	heap.add(null);
+    }
+    
+    // Return true iff the queue is empty.
+    //
+    public boolean isEmpty()
+    {
+    	if(heap.size() == 1){
+    		return true;
+    	}
+    	else return false;
+    }
+    
+    // Insert a pair (key, value) into the queue, and return
+    // a Handle to this pair so that we can find it later in
+    // constant time.
+    //
+    Handle insert(int key, T value)
+    {
+    	Node<T> newNode = new Node<T>(key,value);
+    	heap.add(newNode);
+    	int i = heap.size()-1;
+    	newNode.getHandle().setIndex(i);
+    	int p;
+    	while(i > 1){		
+    			p = (int)(i/2);
+    		if(key < heap.get(p).getKey()) {
+    			swap(heap, i, p);
+    		}
+    		i = p;
+    	}
+    	Handle h = newNode.getHandle();
+    	return h;
+    }
+    
+    /**
+     * 
+     * @param hp
+     * @param i
+     * @param j
+     */
+    public void swap (ArrayList<Node<T>> hp, int i, int j){
+    	Node<T> child = hp.get(i);
+    	Node<T> parent = hp.get(j);
+    	heap.set(i, parent);
+    	heap.get(i).getHandle().setIndex(i);
+    	heap.set(j, child);
+    	heap.get(j).getHandle().setIndex(j);
+     }
+    
+    // Return the smallest key in the queue.
+    //
+    public int min()
+    {
+    	if(!this.isEmpty()) {
+    		return heap.get(1).getKey();
+    	}
+    	else return -1;
+    }
+    
+    // Extract the (key, value) pair associated with the smallest
+    // key in the queue and return its "value" object.
+    //
+    public T extractMin()
+    {
+    	if(heap.size() <= 1) {
+    		return null;
+    	}
+    	Node<T> root = heap.get(1);
+    	root.getHandle().setIndex(-1);
+    	int last = heap.size()-1;
+    	heap.set(1, heap.get(last));
+    	heap.remove(last);
+    	MinHeapify(heap,1);
+    	return root.getValue();
+    }
+    
+    public void MinHeapify(ArrayList<Node<T>> hp, int i) {
+    	int l = 2 * i;
+    	int r = 2 * i + 1;
+    	int min;
+    	
+    	if(heap.size()==1) {
+    		return;
+    	}
+    	
+    	int iKey = heap.get(i).getKey();
+    	
+    	if(l <= heap.size()-1 && heap.get(l).getKey() < iKey) {
+    		min = l;
+    	}
+    	else { min = i;}
+    	int mKey = heap.get(min).getKey();
+    	if(r <= heap.size()-1 && heap.get(r).getKey() < mKey) {
+    		min = r;
+    	}
+    	
+    	if(min != i) {
+    		swap(heap, i, min);
+    		MinHeapify(hp,min);
+    	}
+    }
+    
+    // Look at the (key, value) pair referenced by Handle h.
+    // If that pair is no longer in the queue, or its key
+    // is <= newkey, do nothing and return false.  Otherwise,
+    // replace "key" by "newkey", fixup the queue, and return
+    // true.
+    //
+    public boolean decreaseKey(Handle h, int newkey)
+    {
+    	int i = h.getIndex();
+    	if(h.getIndex() < 1){
+    		return false;
+    	}
+    	if(handleGetKey(h) < newkey) {
+    		return false;
+    	}
+    	heap.get(i).setKey(newkey);
+    	while(i>1 && heap.get((int)(i/2)).getKey() > newkey ) {
+    		swap(heap, i, (int)(i/2));
+    		i = (int)(i/2);
+    	}
+    	return true;
+    }
+    
+    
+    // Get the key of the (key, value) pair associated with a 
+    // given Handle. (This result is undefined if the handle no longer
+    // refers to a pair in the queue.)
+    //
+    public int handleGetKey(Handle h)
+    {
+    	if(h.getIndex() == -1) {
+    		return 0;
+    	}
+    	else{
+    		int i = h.getIndex();
+    		if(i<=heap.size()-1) {
+    			return heap.get(i).getKey();
+    		}
+    		else return 0;
+    	}
+    }
+
+    // Get the value object of the (key, value) pair associated with a 
+    // given Handle. (This result is undefined if the handle no longer
+    // refers to a pair in the queue.)
+    //
+    public T handleGetValue(Handle h)
+    {
+    	if(h.getIndex() == -1) {
+    		return null;
+    	}
+    	else {
+    		int i = h.getIndex();
+    		return heap.get(i).getValue();
+    	}
+    }
+    
+    // Print every element of the queue in the order in which it appears
+    // in the implementation (i.e. the array representing the heap).
+    public String toString()
+    {
+    	String s = "";
+    	for(int i=1; i<heap.size(); i++) {
+    		s = s +"(" + heap.get(i).getKey() + " " +  heap.get(i).getValue()
+    				+ ")" + "\n";
+    	}
+    	return s;
+    }
+    
+    /*public static void main(String[] args) {
+    	PriorityQueue<String> q = new PriorityQueue<String>();
+    	
+    	// build up the queue
+    	q.insert(4, "four");
+    	q.insert(7, "seven");
+    	q.insert(1, "one");
+    	q.insert(6, "six");
+    	q.insert(12, "twelve");
+    	q.insert(3, "three");
+    	q.insert(11, "eleven");
+    	q.insert(5, "five"); 
+    	q.insert(8, "eight");
+    	q.insert(3, "three-prime");
+    	q.insert(2, "two");    	
+    	System.out.println("Initial queue:\n" + q);
+    	
+    	q.extractMin();
+    	System.out.println(q);
+    	
+    	Handle h = new Handle();
+    	h.setIndex(0);
+    	q.decreaseKey(h, 1);
+    	System.out.println(q.decreaseKey(h, 1));
+    	System.out.println(q);
+    	
+    	System.out.println(q.heap.get(7).getHandle().getIndex());
+    	System.out.println(q.heap.get(7).getKey());
+    }*/
+}
