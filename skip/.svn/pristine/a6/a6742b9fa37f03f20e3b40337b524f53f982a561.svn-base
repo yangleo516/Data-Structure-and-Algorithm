@@ -1,0 +1,245 @@
+//
+// EVENTLIST.JAVA
+// Skeleton code for your EventList collection type.
+//
+import java.util.*;
+
+class EventList {
+    
+    Random randseq;
+    Event head = new Event(-100000,"");		//Construct head for Eventlist
+    Event tail = new Event(100000,"");		//Construct tail for Eventlist
+    public int num = 1;
+    ////////////////////////////////////////////////////////////////////
+    // Here's a suitable geometric random number generator for choosing
+    // pillar heights.  We use Java's ability to generate random booleans
+    // to simulate coin flips.
+    ////////////////////////////////////////////////////////////////////
+    
+    int randomHeight()
+    {
+	int v = 1;
+	while (randseq.nextBoolean()) { v++; }
+	return v;
+    }
+
+    
+    //
+    // Constructor
+    //
+    public EventList()
+    {
+    	randseq = new Random(58243); // You may seed the PRNG however you like.
+ //   	head.next = new Event[2000];
+ //   	tail.prev = new Event[2000];
+    	head.next = new Event[num];  // Initialize skip list. Initialize pillar
+    	tail.prev = new Event[num];
+    	head.next[0] = tail;		// Make head's pillar points tail
+    	tail.prev[0] = head;		// Make tail's pillar points head
+    	/*for(int l = 0;l<2000;l++){
+    		head.next[l] = tail;
+    		tail.prev[l] = head;
+    	}*/
+    	head.link = null;			// Initialized liked list for a node.
+    	tail.link = null;
+    }
+
+    
+    //
+    // Add an Event to the list.
+    //
+    public void insert(Event e)
+    {
+    	int t = randomHeight();
+    	e.next = new Event[t];
+    	e.prev = new Event[t];
+    	Event[] oldNext = head.next;				// Copy head's pillar into a new one
+		Event[] oldPrev = tail.prev;				// Copy tail's pillar into a new one
+    	while(head.next.length < t){				// Double pillars' size dynamically 
+    		num = num * 2;
+    		head.next = new Event[num];
+    		tail.prev = new Event[num];		
+    	}
+    	rePoint(head.next,tail.prev,oldNext,oldPrev);	//Call "rePoint" method to re-point
+    	
+    	int l = head.next.length-1;
+    	Event x = head;
+    	Event y = head;
+    	
+    	Event target = findYear(e.year);
+    	
+    	if(target != null){					//link nodes with same year
+    		e.link = target.link;
+			target.link = e;
+    	}
+    	else{
+    		while(l >= 0){
+        		y = x.next[l];
+        		if(y.year < e.year){
+        			x = y;
+        		}
+        		else{
+        			if(l < t){
+        					x.next[l] = e;
+            				e.next[l] = y;
+            				e.prev[l] = x;
+            				y.prev[l] = e;
+        			}
+        			l--;
+        		}
+        	}
+        }
+    }
+    
+    /**
+     * Make head's and tail's pillar re-point their original nodes.
+     * @param newNext	next array of new head
+     * @param newPrev	prev array of new tail
+     * @param oldNext	copy of next array from old head
+     * @param oldPrev	copy of prev array from old tail
+     */
+    public void rePoint(Event[] newNext, Event[] newPrev, Event[] oldNext, Event[] oldPrev){
+    	for(int l=0; l<newNext.length;l++){
+    		if(l>=oldNext.length){
+    			newNext[l] = tail;
+    			newPrev[l] = head;
+    		}
+    		else{
+    			newNext[l] = oldNext[l];
+    			newPrev[l] = oldPrev[l];
+    		}
+    	}
+    }
+    
+    //
+    // Remove all Events in the list with the specified year.
+    //
+    public void remove(int year)
+    {
+    	Event x = findYear(year);
+    	if(x != null){
+    		for(int l = x.next.length-1; l>=0; l--){
+        		x.prev[l].next[l] = x.next[l];
+        		x.next[l].prev[l] = x.prev[l];
+        	}
+    	}
+    	
+    	Event y = x;
+    	while(x != null){
+    		y = x.link;
+    		x = null;
+    		x = y;
+    	}
+    }
+    
+    /**
+     * Help remove a node with a certain year
+     * @param year 
+     * @return An event object (node) with a certain year
+     */
+    public Event findYear(int year){
+    	int l = head.next.length-1;
+    	Event x = head;
+    	Event y = head;
+    	while(l >= 0){
+    		y = x.next[l];
+    		if(y.year == year){
+    			return y;
+    		}
+    		else 
+    			if(y.year < year){
+    				x = y;
+    			}
+    			else l--;
+    	}
+    	return null;
+    }
+    
+    //
+    // Find all events with greatest year <= input year
+    //
+    public Event [] findMostRecent(int year)
+    {
+    	Event y = findYear(year);
+    	while(y==null){
+    		year = year - 1;
+    		y = findYear(year);
+    		if(year<=-10000)
+    			return null;
+    	}
+    	
+    	int num = findRangeHelper(year, year);
+    	Event[] latest = new Event[num];
+    	int i = 0;
+    	while(y!=null){
+        	latest[i] = y;
+        	i = i + 1;
+        	y = y.link;
+        }
+    	return latest;
+    }
+    
+    
+    //
+    // Find all Events within the specific range of years (inclusive).
+    //
+    public Event[] findRange(int first, int last)
+    {
+    	int num = findRangeHelper(first,last);
+    	if(num == 0){
+    		return null;
+    	}
+    	Event[] range = new Event[num];
+    	int i = 0;
+    	Event x = findYear(first);
+    	while(x==null){
+    		first = first + 1;
+    		x = findYear(first);
+    	}
+    	Event y = findYear(last);
+    	while(y==null){
+    		last = last - 1;
+    		y = findYear(last);
+    	}
+    	while(x.year <= y.year){
+    		Event k = x;
+    		while(k != null){
+    			range[i] = k;
+    			i++;
+    			k = k.link;
+    		}
+    		x = x.next[0];
+    	}
+    	return range;
+    }
+    
+    /**
+     * @param first the left-most node index in the range
+     * @param last	the right-most node index in the range
+     * @return number of nodes within the range
+     */
+    public int findRangeHelper(int first, int last){
+    	int counter = 0;
+    	
+    	Event x = findYear(first);
+    	while(x==null){
+    		first = first + 1;
+    		x = findYear(first);
+    	}
+    	Event y = findYear(last);
+    	while(y==null){
+    		last = last - 1;
+    		y = findYear(last);
+    	}
+    	while(x.year <= y.year){
+    		Event k = x;
+    		while(k != null){
+    			counter++;
+    			k = k.link;
+    		}
+    		x = x.next[0];
+    	}
+//    	System.out.println("COUNTER" + counter);
+    	return counter;
+    }
+}
